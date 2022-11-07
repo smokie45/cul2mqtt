@@ -20,10 +20,10 @@ BAUDRATE    = 38400
 MQTT_SERVER = "192.168.0.90"
 MQTT_PORT   = 1883
 
-async def main(loop):
+async def main():
     try:
         reader, writer = await serial_asyncio.open_serial_connection(url=PORT, baudrate=BAUDRATE)
-    except serial.SerialException:
+    except IOError:
         log.error( "Can not open " + PORT )
         exit("Cannot open " + PORT)
     # messages = [b'V\n',b'X01\n']
@@ -34,7 +34,7 @@ async def main(loop):
     receiver = recv(reader)
 
     print("Start receiving from " + PORT )
-    await asyncio.wait([ sender, receiver])
+    await asyncio.gather( send(writer), recv(reader) )
 
 async def send( w ):
     while True:
@@ -81,7 +81,7 @@ my_parser = argparse.ArgumentParser(description='Talk to CUL stick on ttyUSB and
 my_parser.add_argument('--port',
                        required=False,
                        type=str,
-                       default="/dev/ttyUSB0",
+                       default="/dev/culstick",
                        help='Path to serial port device')
 my_parser.add_argument('--log',
                        required=False,
@@ -138,9 +138,8 @@ for t in IT2MQTT:
     mqttC.subscribe( IT2MQTT[t], 0 )
     log.info('subscribed to mqtt: ' + IT2MQTT[t] )
 
-loop = asyncio.get_event_loop()
 try:
-    loop.run_until_complete(main(loop))
+    asyncio.run( main() )
 except KeyboardInterrupt:
     state='stop'
     time.sleep(2)
@@ -148,4 +147,3 @@ except KeyboardInterrupt:
     mqttC.loop_stop()
     mqttC.disconnect()
     print("Terminated")
-loop.close()

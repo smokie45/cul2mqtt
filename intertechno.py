@@ -106,7 +106,7 @@ class Factory():
         else:
             # decode new v3 protocol: 27bit address + 2bit state + 4 bit channel
             # protocol is tristate: 2 bits => 1 bit
-            x = int( buf[1:17], base=16)
+            x = int( buf[2:17], base=16)
             state = (x >> 8) & 1
             addr  = x & 0xFFFFFFFFFFFFF0FF
             if state == 1:
